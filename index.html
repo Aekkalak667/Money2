@@ -180,13 +180,35 @@
 
     function getAIPredict(aiType, data = scores) {
       if (data.length === 0) return '';
+      
       if (aiType === 1) {
-        let counts = { P: 0, B: 0 };
-        for (let r of data) {
-          if (r === 'P') counts.P++;
-          else if (r === 'B') counts.B++;
+        // วิเคราะห์ pattern จากสกอร์ก่อนหน้า
+        const patternLength = 3;
+        if (data.length <= patternLength) return data[data.length - 1];
+
+        const recentPattern = data.slice(-patternLength).join('');
+        const patternCount = {};
+
+        for (let i = 0; i <= data.length - patternLength - 1; i++) {
+          const pattern = data.slice(i, i + patternLength).join('');
+          const next = data[i + patternLength];
+          if (!patternCount[pattern]) patternCount[pattern] = {};
+          patternCount[pattern][next] = (patternCount[pattern][next] || 0) + 1;
         }
-        return counts.P > counts.B ? 'P' : 'B';
+
+        const predictOptions = patternCount[recentPattern];
+        if (predictOptions) {
+          let max = 0, guess = '';
+          for (let key in predictOptions) {
+            if (predictOptions[key] > max) {
+              max = predictOptions[key];
+              guess = key;
+            }
+          }
+          return guess || data[data.length - 1];
+        } else {
+          return data[data.length - 1];
+        }
       }
 
       if (aiType === 2) {
